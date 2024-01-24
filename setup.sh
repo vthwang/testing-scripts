@@ -3,6 +3,7 @@
 # Parameters
 ks3_version=v1.24.14+k3s1
 max_attempts=5
+pod_max_attempts=20
 
 # Ensure the script is run as root
 if [ "$(id -u)" != "0" ]; then
@@ -37,7 +38,7 @@ while [ $attempt -lt $max_attempts ]; do
         pod_attempt=0
 
         # Execute the next command if nodes are found
-        while [ $pod_attempt -lt $max_attempts ]; do
+        while [ $pod_attempt -lt $pod_max_attempts ]; do
             echo "Checking if all pods are running or completed (Attempt $((pod_attempt+1))/$max_attempts)..."
             if k3s kubectl get pods --all-namespaces | awk '{if(NR>1)print $4}' | grep -vE "Running|Completed"; then
                 echo "Some pods are not in Running or Completed status"
