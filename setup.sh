@@ -13,7 +13,7 @@ fi
 # Update and Upgrade the System
 echo "Updating and upgrading system packages..."
 apt-get update
-apt-get upgrade -yq
+DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
 apt-get autoremove -y
 apt-get autoclean
 
