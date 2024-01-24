@@ -12,7 +12,11 @@ fi
 
 # Update and Upgrade the System
 echo "Updating and upgrading system packages..."
-apt-get update && apt-get upgrade -y
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get upgrade -y
+apt-get autoremove -y
+apt-get autoclean
 
 # Install k3s
 echo "Installing k3s..."
