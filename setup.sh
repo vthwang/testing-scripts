@@ -12,9 +12,8 @@ fi
 
 # Update and Upgrade the System
 echo "Updating and upgrading system packages..."
-export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get upgrade -y
+apt-get upgrade -yq
 apt-get autoremove -y
 apt-get autoclean
 
@@ -31,9 +30,8 @@ attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
     echo "Attempting to get nodes (Attempt $((attempt+1))/$max_attempts)..."
-    if k3s kubectl get nodes | awk '{if(NR>1)print $2}' | grep -q "Ready"; then
-            echo "Node is in Ready status. Proceeding to next step."
-
+    if k3s kubectl get nodes | awk '{if(NR>1)print $2}' | grep -qw "Ready"; then
+        echo "Node is in Ready status. Proceeding to next step."
         k3s kubectl get nodes
         # Execute the next command if nodes are found
         echo "Executing 'getting pods'..."
