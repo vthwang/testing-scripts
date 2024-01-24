@@ -33,11 +33,28 @@ while [ $attempt -lt $max_attempts ]; do
     if k3s kubectl get nodes | awk '{if(NR>1)print $2}' | grep -qw "Ready"; then
         echo "Node is in Ready status. Proceeding to next step."
         k3s kubectl get nodes
+
+        pod_attempt=0
+
         # Execute the next command if nodes are found
-        echo "Executing 'getting pods'..."
-        sleep 5
-        k3s kubectl get pods --all-namespaces
-        exit 0
+        while [ $pod_attempt -lt $max_attempts ]; do
+            echo "Checking if all pods are running or completed (Attempt $((pod_attempt+1))/$max_attempts)..."
+            if k3s kubectl get pods --all-namespaces | awk '{if(NR>1)print $4}' | grep -vE "Running|Completed"; then
+                echo "Some pods are not in Running or Completed status"
+                pod_attempt=$((pod_attempt+1))
+                sleep 5
+            else
+                echo "All pods are in Running or Completed status. Proceeding to next step."
+                k3s kubectl get pods --all-namespaces
+                exit 0
+            fi
+        done
+
+        if [ $pod_attempt -eq $max_attempts ]; then
+            echo "Not all pods are running or completed after $max_attempts attempts. You can execute following commands to make sure all pods are running."
+            echo "k3s kubectl get pods --all-namespaces"
+            exit 1
+        fi
     fi
 
     attempt=$((attempt+1))
