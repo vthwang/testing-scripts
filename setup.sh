@@ -34,8 +34,10 @@ while [ $attempt -lt $max_attempts ]; do
     if k3s kubectl get nodes | awk '{if(NR>1)print $2}' | grep -q "Ready"; then
             echo "Node is in Ready status. Proceeding to next step."
 
+        k3s kubectl get nodes
         # Execute the next command if nodes are found
         echo "Executing 'getting pods'..."
+        sleep 5
         k3s kubectl get pods --all-namespaces
         exit 0
     fi
