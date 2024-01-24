@@ -22,26 +22,26 @@ apt-get autoclean
 echo "Installing k3s..."
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=$ks3_version sh -s - server --cluster-init
 
-# Wait for 2 seconds
-echo "Waiting for 2 seconds..."
-sleep 2
+# Wait for 5 seconds
+echo "Waiting for 5 seconds..."
+sleep 5
 
 # Check for nodes
 attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
     echo "Attempting to get nodes (Attempt $((attempt+1))/$max_attempts)..."
-    if sudo k3s kubectl get nodes; then
-        echo "Nodes are available. Proceeding to next step."
+    if k3s kubectl get nodes | awk '{if(NR>1)print $2}' | grep -q "Ready"; then
+            echo "Node is in Ready status. Proceeding to next step."
 
         # Execute the next command if nodes are found
-        echo "Executing 'sudo k3s kubectl get pods --all-namespaces'..."
-        sudo k3s kubectl get pods --all-namespaces
+        echo "Executing 'getting pods'..."
+        k3s kubectl get pods --all-namespaces
         exit 0
     fi
 
     attempt=$((attempt+1))
-    sleep 2
+    sleep 5
 done
 
 # Show error if no nodes are found after 5 attempts
