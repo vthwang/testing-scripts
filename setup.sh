@@ -13,10 +13,31 @@ fi
 
 # Update and Upgrade the System
 echo "Updating and upgrading system packages..."
+
 apt-get update
+if [ $? -ne 0 ]; then
+    echo "E: Checking issue after apt-get update"
+    exit 1
+fi
+
+
 DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+if [ $? -ne 0 ]; then
+    echo "E: Checking issue after apt-get upgrade"
+    exit 1
+fi
+
 apt-get autoremove -y
+if [ $? -ne 0 ]; then
+    echo "E: Checking issue after apt-get autoremove"
+    exit 1
+fi
+
 apt-get autoclean
+if [ $? -ne 0 ]; then
+    echo "E: Checking issue after apt-get autoclean"
+    exit 1
+fi
 
 # Install k3s
 echo "Installing k3s..."
@@ -39,7 +60,7 @@ while [ $attempt -lt $max_attempts ]; do
 
         # Execute the next command if nodes are found
         while [ $pod_attempt -lt $pod_max_attempts ]; do
-            echo "Checking if all pods are running or completed (Attempt $((pod_attempt+1))/$max_attempts)..."
+            echo "Checking if all pods are running or completed (Attempt $((pod_attempt+1))/$pod_max_attempts)..."
             if k3s kubectl get pods --all-namespaces | awk '{if(NR>1)print $4}' | grep -vE "Running|Completed"; then
                 echo "Some pods are not in Running or Completed status"
                 pod_attempt=$((pod_attempt+1))
@@ -51,7 +72,7 @@ while [ $attempt -lt $max_attempts ]; do
             fi
         done
 
-        if [ $pod_attempt -eq $max_attempts ]; then
+        if [ $pod_attempt -eq $pod_max_attempts ]; then
             echo "Not all pods are running or completed after $max_attempts attempts. You can execute following commands to make sure all pods are running."
             echo "k3s kubectl get pods --all-namespaces"
             exit 1
