@@ -3,7 +3,7 @@
 # Parameters
 ks3_version=v1.24.14+k3s1
 max_attempts=5
-pod_max_attempts=20
+pod_max_attempts=10
 
 # Ensure the script is run as root
 if [ "$(id -u)" != "0" ]; then
@@ -66,7 +66,8 @@ while [ $attempt -lt $max_attempts ]; do
                 pod_attempt=$((pod_attempt+1))
                 sleep 5
             else
-                echo "All pods are in Running or Completed status. Proceeding to next step."
+                echo "All pods are in Running or Completed status. Proceeding to next step. You can execute following commands to make sure all pods are running."
+                echo "k3s kubectl get pods --all-namespaces"
                 k3s kubectl get pods --all-namespaces
                 exit 0
             fi
