@@ -1,89 +1,65 @@
 #!/bin/bash
 
-# Parameters
-ks3_version=v1.24.14+k3s1
-max_attempts=5
-pod_max_attempts=10
+server_ip=$1
+dns_name=$2
+email=$3
+password=$4
+config_name="k3s-murm-rancher"
+cert_manager_version="v1.13.3"
 
-# Ensure the script is run as root
-if [ "$(id -u)" != "0" ]; then
-   echo "This script must be run as root" 1>&2
-   exit 1
-fi
-
-# Update and Upgrade the System
-echo "Updating and upgrading system packages..."
-
-apt-get update
-if [ $? -ne 0 ]; then
-    echo "E: Checking issue after apt-get update"
+# Ensure has 4 parameters
+if [ $# -ne 4 ]; then
+    echo "Usage: $0 <server_ip> <dns_name> <email> <password>"
     exit 1
 fi
 
-
-DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
-if [ $? -ne 0 ]; then
-    echo "E: Checking issue after apt-get upgrade"
+# Ensure docker is running, if not show error and exit
+echo "Checking if docker is running..."
+if ! systemctl is-active --quiet docker; then
+    echo "Docker is not running. Please start docker and try again."
     exit 1
 fi
 
-apt-get autoremove -y
-if [ $? -ne 0 ]; then
-    echo "E: Checking issue after apt-get autoremove"
-    exit 1
-fi
+# Ensure the .kube directory exists
+mkdir -p ~/.kube
 
-apt-get autoclean
-if [ $? -ne 0 ]; then
-    echo "E: Checking issue after apt-get autoclean"
-    exit 1
-fi
+# Copy the file from the remote server
+scp root@$server_ip:/etc/rancher/k3s/k3s.yaml ~/.kube/$config_name
 
-# Install k3s
-echo "Installing k3s..."
-curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=$ks3_version sh -s - server --cluster-init
+# Edit the file to replace localhost with dns_name
+sed -i "s/localhost/$dns_name/g" ~/.kube/$config_name
+# Replace all default into $config_name
+sed -i "s/default/$config_name/g" ~/.kube/$config_name
 
-# Wait for 5 seconds
-echo "Waiting for 5 seconds..."
-sleep 5
+# Set KUBECONFIG environment variable
+export KUBECONFIG=~/.kube/config:~/.kube/$config_name
 
-# Check for nodes
-attempt=0
+# Merge the kubeconfig files and backup the original
+kubectl config view --merge --flatten > ~/.kube/merged_kubeconfig
+mv ~/.kube/config ~/.kube/config_backup
+mv ~/.kube/merged_kubeconfig ~/.kube/config
 
-while [ $attempt -lt $max_attempts ]; do
-    echo "Attempting to get nodes (Attempt $((attempt+1))/$max_attempts)..."
-    if k3s kubectl get nodes | awk '{if(NR>1)print $2}' | grep -qw "Ready"; then
-        echo "Node is in Ready status. Proceeding to next step."
-        k3s kubectl get nodes
+# Deploy Rancher with Helm
+kubectl config use-context $config_name
 
-        pod_attempt=0
+# Add Helm repositories
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
 
-        # Execute the next command if nodes are found
-        while [ $pod_attempt -lt $pod_max_attempts ]; do
-            echo "Checking if all pods are running or completed (Attempt $((pod_attempt+1))/$pod_max_attempts)..."
-            if k3s kubectl get pods --all-namespaces | awk '{if(NR>1)print $4}' | grep -vE "Running|Completed"; then
-                echo "Some pods are not in Running or Completed status"
-                pod_attempt=$((pod_attempt+1))
-                sleep 5
-            else
-                echo "All pods are in Running or Completed status. Proceeding to next step. You can execute following commands to make sure all pods are running."
-                echo "k3s kubectl get pods --all-namespaces"
-                k3s kubectl get pods --all-namespaces
-                exit 0
-            fi
-        done
+# Install Cert-Manager
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version $cert_manager_version --set installCRDs=true
 
-        if [ $pod_attempt -eq $pod_max_attempts ]; then
-            echo "Not all pods are running or completed after $max_attempts attempts. You can execute following commands to make sure all pods are running."
-            echo "k3s kubectl get pods --all-namespaces"
-            exit 1
-        fi
-    fi
+# Install Rancher
+helm install rancher rancher-stable/rancher \
+  --namespace cattle-system \
+  --create-namespace \
+  --set hostname=$dns_name \
+  --set replicas=1 \
+  --set bootstrapPassword=password \
+  --set ingress.tls.source=letsEncrypt \
+  --set letsEncrypt.email=$email \
+  --set letsEncrypt.ingress.class=traefik
 
-    attempt=$((attempt+1))
-    sleep 5
-done
-
-# Show error if no nodes are found after 5 attempts
-echo "Error: Unable to get nodes after $max_attempts attempts."
-exit 1
+# Instructions to access Rancher
+echo "Access Rancher at https://$dns_name/dashboard/?setup=$password"
