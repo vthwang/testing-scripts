@@ -24,7 +24,7 @@ fi
 mkdir -p ~/.kube
 
 # Copy the file from the remote server
-scp root@$server_ip:/etc/rancher/k3s/k3s.yaml ~/.kube/$config_name
+scp root@$server_ip:/etc/rancher/k3s/k3s.yaml ~/.kube/${config_name}
 
 # Edit the file to replace localhost with dns_name
 perl -pi -e "s/127.0.0.1/${dns_name}/g" ~/.kube/${config_name}
@@ -32,15 +32,17 @@ perl -pi -e "s/127.0.0.1/${dns_name}/g" ~/.kube/${config_name}
 perl -pi -e "s/default/${config_name}/g" ~/.kube/${config_name}
 
 # Set KUBECONFIG environment variable
-export KUBECONFIG=~/.kube/config:~/.kube/$config_name
+export KUBECONFIG=~/.kube/config:~/.kube/${config_name}
 
 # Merge the kubeconfig files and backup the original
 kubectl config view --merge --flatten > ~/.kube/merged_kubeconfig
 mv ~/.kube/config ~/.kube/config_backup
 mv ~/.kube/merged_kubeconfig ~/.kube/config
 
+chmod 600 ~/.kube/config
+
 # Deploy Rancher with Helm
-kubectl config use-context $config_name
+kubectl config use-context ${config_name}
 
 # Add Helm repositories
 helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
@@ -48,7 +50,7 @@ helm repo add jetstack https://charts.jetstack.io
 helm repo update
 
 # Install Cert-Manager
-helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version $cert_manager_version --set installCRDs=true
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version ${cert_manager_version} --set installCRDs=true
 
 # Install Rancher
 helm install rancher rancher-stable/rancher \
