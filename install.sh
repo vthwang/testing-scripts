@@ -69,9 +69,9 @@ while [ $attempt -lt $max_attempts ]; do
                 pod_attempt=$((pod_attempt+1))
                 sleep 10
             else
+                k3s kubectl get pods --all-namespaces
                 echo "All pods are in Running or Completed status. Proceeding to next step. You can execute following commands to make sure all pods are running."
                 echo "k3s kubectl get pods --all-namespaces"
-                k3s kubectl get pods --all-namespaces
                 exit 0
             fi
         done
