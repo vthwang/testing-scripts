@@ -27,9 +27,9 @@ mkdir -p ~/.kube
 scp root@$server_ip:/etc/rancher/k3s/k3s.yaml ~/.kube/$config_name
 
 # Edit the file to replace localhost with dns_name
-sed -i "s/localhost/${dns_name}/g" ~/.kube/${config_name}
+perl -pi -e "s/127.0.0.1/${dns_name}/g" ~/.kube/${config_name}
 # Replace all default into $config_name
-sed -i "s/default/${config_name}/g" ~/.kube/${config_name}
+perl -pi -e "s/default/${config_name}/g" ~/.kube/${config_name}
 
 # Set KUBECONFIG environment variable
 export KUBECONFIG=~/.kube/config:~/.kube/$config_name
@@ -56,7 +56,7 @@ helm install rancher rancher-stable/rancher \
   --create-namespace \
   --set hostname=${dns_name} \
   --set replicas=1 \
-  --set bootstrapPassword=password \
+  --set bootstrapPassword=${password} \
   --set ingress.tls.source=letsEncrypt \
   --set letsEncrypt.email=${email} \
   --set letsEncrypt.ingress.class=traefik
