@@ -44,6 +44,10 @@ chmod 600 ~/.kube/config
 # Deploy Rancher with Helm
 kubectl config use-context ${config_name}
 
+# Wait for five seconds
+echo "Waiting for 5 seconds..."
+sleep 5
+
 # Add Helm repositories
 helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 helm repo add jetstack https://charts.jetstack.io
