@@ -64,10 +64,10 @@ while [ $attempt -lt $max_attempts ]; do
             # Needs to have at least 2 running pods and all pods should be in Running or Completed status
             running_count=$(k3s kubectl get pods --all-namespaces | awk '{if(NR>1)print $4}' | grep -c "Running")
             completed_count=$(k3s kubectl get pods --all-namespaces | awk '{if(NR>1)print $4}' | grep -vE "Running|Completed" | wc -l)
-            if [ "$running_count" -le 2 ] || [ "$completed_count" -gt 0 ]; then
+            if [ "$running_count" -le 5 ] || [ "$completed_count" -gt 0 ]; then
                 echo "Some pods are not in Running or Completed status"
                 pod_attempt=$((pod_attempt+1))
-                sleep 5
+                sleep 10
             else
                 echo "All pods are in Running or Completed status. Proceeding to next step. You can execute following commands to make sure all pods are running."
                 echo "k3s kubectl get pods --all-namespaces"
