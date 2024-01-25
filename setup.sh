@@ -15,7 +15,7 @@ fi
 
 # Ensure docker is running, if not show error and exit
 echo "Checking if docker is running..."
-if ! systemctl is-active --quiet docker; then
+if ! (ps aux | grep -v grep | grep -c docker == 0); then
     echo "Docker is not running. Please start docker and try again."
     exit 1
 fi
