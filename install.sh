@@ -11,13 +11,6 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
-echo 'checking...'
-
-while fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do
-    echo "Waiting on apt.."
-    sleep 2
-done
-
 # Update and Upgrade the System
 echo "Updating and upgrading system packages..."
 
