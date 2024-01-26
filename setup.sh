@@ -20,6 +20,11 @@ if [ "$(ps aux | grep -v grep | grep -c docker)" -lt 1 ]; then
     exit 1
 fi
 
+# Check config_murm_backup exist or not, if exist, replace it with config
+if [ -f ~/.kube/config_murm_backup ]; then
+    mv ~/.kube/config_murm_backup ~/.kube/config
+fi
+
 # Ensure the .kube directory exists
 mkdir -p ~/.kube
 
@@ -41,6 +46,34 @@ mv ~/.kube/merged_kubeconfig ~/.kube/config
 
 chmod 600 ~/.kube/config
 rm ~/.kube/${config_name}
+
+# Check if the cluster is ready
+echo "Checking if the cluster is ready..."
+attempt=1
+while true; do
+    # Get the status of Kubernetes nodes and count how many are 'Ready'
+    ready_nodes=$(kubectl get nodes | awk '{if(NR>1)print $2}' | grep -c "Ready")
+
+    # Check if there is at least one 'Ready' node
+    if [ "$ready_nodes" -ge 1 ]; then
+        echo "Cluster is ready."
+        break
+    else
+        echo "Attempt $attempt: Cluster is not ready. Checking again in 10 seconds..."
+    fi
+
+    # Increment the attempt counter
+    attempt=$((attempt+1))
+
+    # Check if maximum attempts have been reached
+    if [ $attempt -gt 5 ]; then
+        echo "Cluster is not ready after 5 attempts. Please check the cluster and try again."
+        exit 1
+    fi
+
+    # Wait for the specified interval before retrying
+    sleep 10
+done
 
 # Deploy Rancher with Helm
 kubectl config use-context ${config_name} --insecure-skip-tls-verify=true
