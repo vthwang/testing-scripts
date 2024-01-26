@@ -55,13 +55,38 @@ helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
 
-# Install Cert-Manager
-helm install cert-manager jetstack/cert-manager \
-  --insecure-skip-tls-verify \
-  --namespace cert-manager \
-  --create-namespace \
-  --version ${cert_manager_version} \
-  --set installCRDs=true
+# Install Cert-Manager - retry 5 times
+attempt=0
+while true; do
+    # Increment the attempt counter
+    ((attempt++))
+
+    echo "Attempt $attempt of 5: Running Helm command..."
+    # Run the Helm command
+    helm install cert-manager jetstack/cert-manager \
+      --insecure-skip-tls-verify \
+      --namespace cert-manager \
+      --create-namespace \
+      --version ${cert_manager_version} \
+      --set installCRDs=true
+
+    # Check if the command succeeded
+    if [ $? -eq 0 ]; then
+        echo "Helm command succeeded."
+        break
+    else
+        echo "Helm command failed."
+        # Check if maximum attempts are reached
+        if [ "$attempt" -ge 5 ]; then
+            echo "Maximum attempts reached, aborting."
+            exit 1
+        fi
+
+        # Wait for the specified delay before retrying
+        echo "Waiting for 5 seconds before retrying..."
+        sleep 5
+    fi
+done
 
 echo "Waiting cert-manager to be ready..."
 
