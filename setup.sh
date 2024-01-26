@@ -49,12 +49,9 @@ helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
 
-# Wait for five seconds
-echo "Waiting for 5 seconds..."
-sleep 5
-
 # Install Cert-Manager
 helm install cert-manager jetstack/cert-manager \
+  --insecure-skip-tls-verify \
   --namespace cert-manager \
   --create-namespace \
   --version ${cert_manager_version} \
@@ -75,6 +72,7 @@ echo "cert-manager is successfully deployed and ready."
 
 # Install Rancher
 helm install rancher rancher-stable/rancher \
+  --insecure-skip-tls-verify \
   --namespace cattle-system \
   --create-namespace \
   --set hostname=${dns_name} \
