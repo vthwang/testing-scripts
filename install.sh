@@ -7,13 +7,15 @@ pod_max_attempts=10
 
 # Ensure the script is run as root
 if [ "$(id -u)" != "0" ]; then
-   echo "This script must be run as root" 1>&2
-   exit 1
+    echo "This script must be run as root" 1>&2
+    exit 1
 fi
 
+echo 'checking...'
+
 while fuser /var/{lib/{dpkg,apt/lists},cache/apt/archives}/lock >/dev/null 2>&1; do
-  echo "Waiting on apt.."
-  sleep 2
+    echo "Waiting on apt.."
+    sleep 2
 done
 
 # Update and Upgrade the System
