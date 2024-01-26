@@ -36,10 +36,11 @@ export KUBECONFIG=~/.kube/config:~/.kube/${config_name}
 
 # Merge the kubeconfig files and backup the original
 kubectl config view --merge --flatten > ~/.kube/merged_kubeconfig
-mv ~/.kube/config ~/.kube/config_backup
+mv ~/.kube/config ~/.kube/config_murm_backup
 mv ~/.kube/merged_kubeconfig ~/.kube/config
 
 chmod 600 ~/.kube/config
+rm ~/.kube/${config_name}
 
 # Deploy Rancher with Helm
 kubectl config use-context ${config_name}
