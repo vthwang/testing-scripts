@@ -71,7 +71,7 @@ while true; do
         exit 1
     fi
 
-    # Wait for the specified interval before retrying
+    # Wait for 10 seconds
     sleep 10
 done
 
