@@ -60,12 +60,18 @@ helm install cert-manager jetstack/cert-manager \
   --version ${cert_manager_version} \
   --set installCRDs=true
 
-echo "Waiting for 20 seconds to complete cert-manager installation..."
-for (( i=1; i<=20; i++ ))
-do
-   sleep 1
-   echo -n "."
-done
+echo "Waiting cert-manager to be ready..."
+
+# Wait for cert-manager pods to be ready
+kubectl wait --for=condition=Ready pod -l app=cert-manager --namespace cert-manager --timeout=300s
+
+# Wait for cert-manager-webhook pods to be ready
+kubectl wait --for=condition=Ready pod -l app=webhook --namespace cert-manager --timeout=300s
+
+# Wait for cert-manager-cainjector pods to be ready
+kubectl wait --for=condition=Ready pod -l app=cainjector --namespace cert-manager --timeout=300s
+
+echo "cert-manager is successfully deployed and ready."
 
 # Install Rancher
 helm install rancher rancher-stable/rancher \
