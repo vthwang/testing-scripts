@@ -54,7 +54,18 @@ echo "Waiting for 5 seconds..."
 sleep 5
 
 # Install Cert-Manager
-helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version ${cert_manager_version} --set installCRDs=true
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version ${cert_manager_version} \
+  --set installCRDs=true
+
+echo "Waiting for 20 seconds to complete cert-manager installation..."
+for (( i=1; i<=20; i++ ))
+do
+   sleep 1
+   echo -n "."
+done
 
 # Install Rancher
 helm install rancher rancher-stable/rancher \
