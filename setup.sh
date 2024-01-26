@@ -43,7 +43,7 @@ chmod 600 ~/.kube/config
 rm ~/.kube/${config_name}
 
 # Deploy Rancher with Helm
-kubectl config use-context ${config_name}
+kubectl config use-context ${config_name} --insecure-skip-tls-verify=true
 
 # Add Helm repositories
 helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
